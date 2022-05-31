@@ -4,20 +4,16 @@ apps=$(occ app:list --output json | jq -r ".[] | keys[]")
 
 for app in $apps
 do
-    app_path=$(occ app:getpath $app)
+    echo "Checking $app"
 
-    integrity=$(occ integrity:check-app --output json $app)
+    to_delete=$(occ integrity:check-app --output json "$app" | jq -r 'if type=="array" then [] else (.EXTRA_FILE | keys[]) end')
 
-    if [ $? -eq 0 ]; then
-        continue
-    fi
-
-    to_delete=$(echo $integrity | jq -r '.EXTRA_FILE | keys[]')
+    app_path=$(occ app:getpath "$app")
 
     for f in $to_delete
     do
         p=$app_path/$f
-        echo $p
-        rm $p
+        printf "\t %b\n" "$p"
+        rm "$p"
     done
 done
