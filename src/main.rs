@@ -103,11 +103,8 @@ fn main() {
 
     let reports: HashMap<String, IntegrityReport> = apps
         .par_iter()
-        .map(|app| (app, get_integrity_report(&app)))
-        .filter_map(|(app, report)| match report {
-            Some(r) => Some((String::clone(app), r)),
-            None => None,
-        })
+        .map(|app| (app, get_integrity_report(app)))
+        .filter_map(|(app, report)| report.map(|r| (String::clone(app), r)))
         .collect();
 
     println!("Failing apps: {}", reports.len());
@@ -120,7 +117,7 @@ fn main() {
     let unexpected_files: Vec<PathBuf> = reports
         .par_iter()
         .flat_map(|(app, report)| {
-            let app_path = get_app_path(&app);
+            let app_path = get_app_path(app);
             report
                 .get_extra_files()
                 .into_par_iter()
